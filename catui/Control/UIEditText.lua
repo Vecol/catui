@@ -180,8 +180,8 @@ function UIEditText:wedgeLineAt(x, y, xo, yo)
     -- return line info + both parts of line
     -- split by the current position of cursor
     local wraps, line, byteoffset = self:getLineInfo()
-    local left = line:sub(1, byteoffset + xo)
-    local right = line:sub(byteoffset + yo, -1)
+    local left = line:sub(1, byteoffset + xo - 1)
+    local right = line:sub(byteoffset + yo - 1)
     return wraps, line, byteoffset, left, right
 end
 
@@ -192,10 +192,14 @@ function UIEditText:wedgeLine(lo, ro)
 end
 
 function UIEditText:removeCharAt(x, y)
-    local wraps, line, byteoffset, left, right =
-      self:wedgeLineAt(x, y, -1, 1)
-    table.remove(wraps, y)
-    table.insert(wraps, y, left..right)
+    if x == 0 and y <= 1 then return end
+    local wraps = self.label:getWrap()
+    local line = wraps[y]
+    local bl = utf8.offset(line, x)
+    local br = utf8.offset(line, x + 1)
+    local left = line:sub(1, bl - 1)
+    local right = line:sub(br)
+    wraps[y] = left..right
     self.label:setText(table.concat(wraps, '\n'))
     self.events:dispatch(UI_TEXT_CHANGE, self.label:getText())
     self:moveCursor(-1, 0)
@@ -206,22 +210,25 @@ function UIEditText:removeChar()
 end
 
 function UIEditText:insertCharAt(char, x, y)
-    local wraps, line, byteoffset, left, right =
-      self:wedgeLineAt(x, y, 0, 1)
-    local newLine = left..char..right
+    local wraps = self.label:getWrap()
+    local line = wraps[y]
     if x == 0 then
-      newLine = char..left..right
+        line = char..line
+    else
+        local bo = utf8.offset(line, x + 1)
+        local left = line:sub(1, bo - 1)
+        local right = line:sub(bo)
+        line = left..char..right
     end
     -- some future wrapping :)
     -- if char ~= '\f' and #newLine % 20 == 0 then
     --     print('inserting f')
     --     self:insertCharAt('\f', x+1, y)
     -- end
-    table.remove(wraps, y)
-    table.insert(wraps, y, newLine)
+    wraps[y] = line
     self.label:setText(table.concat(wraps, '\n'))
     self.events:dispatch(UI_TEXT_CHANGE, self.label:getText())
-    self:moveCursor(#char, 0)
+    self:moveCursor(utf8.len(char), 0)
 end
 
 function UIEditText:insertChar(char)
@@ -293,7 +300,8 @@ function UIEditText:onKeyDown(key, scancode, isrepeat)
         if self.cursorCoords.x > 0 then
             self:moveCursor(-1, 0)
         elseif self.cursorCoords.y > 1 then
-            self:moveCursor(#(wraps[self.cursorCoords.y-1] or {}), -1)
+            local upline = wraps[self.cursorCoords.y-1] or ""
+            self:moveCursor(utf8.len(upline), -1)
         end
     elseif key == "right" then
         if self.cursorCoords.x < utf8.len(line) then
@@ -378,7 +386,7 @@ function UIEditText:moveCursor(xo, yo)
     self.cursorCoords.y = self.cursorCoords.y + yo
     if xo == 0 then
       local wraps = self.label:getWrap()
-      local width = #wraps[self.cursorCoords.y]
+      local width = utf8.len(wraps[self.cursorCoords.y])
       if self.cursorCoords.x > width then
         self.cursorCoords.x = width
       end
