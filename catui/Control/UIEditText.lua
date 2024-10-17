@@ -296,7 +296,7 @@ function UIEditText:onKeyDown(key, scancode, isrepeat)
             self:moveCursor(#(wraps[self.cursorCoords.y-1] or {}), -1)
         end
     elseif key == "right" then
-        if self.cursorCoords.x < #line then
+        if self.cursorCoords.x < utf8.len(line) then
             self:moveCursor(1, 0)
         elseif self.cursorCoords.y < self.rows then
             self:moveCursor(-self.cursorCoords.x, 1)
@@ -395,12 +395,15 @@ function UIEditText:drawCursor()
         return
     end
 
-    local wraps = self.label:getWrap()
-    local length = #wraps == 0 and 1 or #wraps
-    local chars = (wraps[self.cursorCoords.y] or ""):sub(
-      1, self.cursorCoords.x
-    )
-    local width = self.label:measureWidth(chars)
+    -- local length = #wraps == 0 and 1 or #wraps
+    local width = 0
+    if self.cursorCoords.x > 0 then
+        local wraps = self.label:getWrap()
+        local line = wraps[self.cursorCoords.y] or ""
+        local byteoffset = utf8.offset(line, self.cursorCoords.x + 1)
+        local chars = line:sub(1, byteoffset - 1)
+        width = self.label:measureWidth(chars)
+    end
     local maxX = self.label:getBoundingBox():getX()
     local maxY = self.label:getBoundingBox():getY()
     maxX = maxX + width + 1
