@@ -27,10 +27,10 @@ SOFTWARE.
 -- ui root control
 -------------------------------------
 local UIRoot = UIControl:extend("UIRoot", {
-    coreContainer,
-    popupContainer,
-    optionContainer,
-    tipContainer,
+    coreContainer = nil,
+    popupContainer = nil,
+    optionContainer = nil,
+    tipContainer = nil,
 })
 
 -------------------------------------

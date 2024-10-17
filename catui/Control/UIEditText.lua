@@ -179,9 +179,9 @@ end
 function UIEditText:wedgeLineAt(x, y, xo, yo)
     -- return line info + both parts of line
     -- split by the current position of cursor
-    local wraps, line, byteoffset = self:getLineInfo(x, y)
-    left = line:sub(1, byteoffset + xo)
-    right = line:sub(byteoffset + yo, -1)
+    local wraps, line, byteoffset = self:getLineInfo()
+    local left = line:sub(1, byteoffset + xo)
+    local right = line:sub(byteoffset + yo, -1)
     return wraps, line, byteoffset, left, right
 end
 

@@ -98,7 +98,7 @@ function UIControl:draw()
     self.events:dispatch(UI_DRAW)
 
     for i,v in ipairs(self.children) do
-        v:draw(dt)
+        v:draw()
     end
 
     self:clipEnd()
